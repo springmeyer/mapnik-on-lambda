@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Map srs="+init=epsg:3857">
+  <Layer name="field_shapes" status="on" srs="+init=epsg:4326">
+    <Datasource>
+      <Parameter name="host">HOST</Parameter>
+      <Parameter name="password">PASSWORD</Parameter>
+      <Parameter name="table">TABLE</Parameter>
+      <Parameter name="geometry_field">GEOMETRY</Parameter>
+      <Parameter name="type">postgis</Parameter>
+      <Parameter name="user">Postgres</Parameter>
+      <Parameter name="dbname">postgres</Parameter>
+      <Parameter name="srid">4326</Parameter>
+      <Parameter name="estimate_extent">false</Parameter>
+      <Parameter name="extent">-150,-85,150,85</Parameter>
+    </Datasource>
+  </Layer>
+</Map>
