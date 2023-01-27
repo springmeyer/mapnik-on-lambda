@@ -1,10 +1,10 @@
 # Rendering with node-mapnik on AWS
 
-The repo provides an example of [Mapbox Vector Tile](https://github.com/mapbox/vector-tile-spec) rendering with node-mapnik on AWS.
+The repo provides an example of rendering with node-mapnik on AWS lambda using [Mapbox Vector Tile](https://github.com/mapbox/vector-tile-spec) functionality.
 
-- The rendering is done on [AWS Lambda](https://aws.amazon.com/lambda/), using [node-mapnik](https://github.com/mapnik/node-mapnik) installed via [container image support](https://aws.amazon.com/blogs/aws/new-for-aws-lambda-container-image-support/).
-- The data is stored in [AWS RDS](https://aws.amazon.com/rds/), specifically using the `aurora-postgresql` engine.
-- The example leverages the [AWS CLI v2](https://aws.amazon.com/cli/)
+The rendering is done on [AWS Lambda](https://aws.amazon.com/lambda/), using [node-mapnik](https://github.com/mapnik/node-mapnik) installed via [container image support](https://aws.amazon.com/blogs/aws/new-for-aws-lambda-container-image-support/).
+
+Overall this is possible because node-mapnik, despite being a C++ application, is distributed as a binary module that works across a wide range of linux distributions (including Amazon Linux 2). Additionally node-mapnik supports both creating Vector tiles and rendering images from Vector Tile sources. The example code included here creates vector tiles since that is most simple. But it could easily be modified to render vector tile sources into images using methods similar to https://github.com/mapbox/tilelive-vector.
 
 The specific versions used are:
 
@@ -38,7 +38,7 @@ If using Aurora you'll want to use the reader endpoint. It will look something l
 cluster-name.cluster-ro-cwu1qccramnk.region.rds.amazonaws.com
 ```
 
-Once you have the endpoint open `lambda-app/map.xml` and edit the XML:
+Once you know the endpoint then open `lambda-app/map.xml` and edit the XML:
   - Change the word `HOST` to be the endpoint address of the RDS instance
   - Change the word `PASSWORD` to be the database password
   - Change the word `TABLE` to point to the database table that has a `geometry` field
@@ -52,9 +52,11 @@ Now you are ready to build the lambda image. Issue a command like:
 docker build -t mapnik-on-lambda:version1 ./lambda-app --platform="linux/amd64"
 ```
 
+Note: the image name of `mapnik-on-lambda:version1` can be anything you choose. You will see `mapnik-on-lambda:version1` referenced in the example commands below, so if you change this name make sure to change it in the below commands as well.
+
 ## Testing locally
 
-If your database is publicly accessible you can test the application locally.
+If your database is publicly accessible you can now test the application locally.
 
 If not publicly accessible, skip to the next section that details testing on AWS.
 
@@ -70,9 +72,10 @@ And then in another terminal issue this command:
 curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'
 ```
 
-If everything is working okay and the container can access your remote database, you should receive back a JSON response detailing the geometries in the table or an error that indicates a misconfiguration.
+If everything is working okay and the container can access your remote database, you should receive back a JSON response detailing the geometries in the table. If things are not configured correctly you should instead receive or an error that indicates the misconfiguration.
 
-Note: this demo is only designed to work with data in WGS84 Geographic that is low enough resolution to display at zoom level zero. If your data is in a different projection and large then you will need to modify the `./lambda-app/app.js` code to do something different.
+Note: this demo is only designed to work with data in WGS84 Geographic that is low enough resolution to display at zoom level zero. If your data is in a different projection and large then you will likely need to modify the `./lambda-app/app.js` code to do something different in order to test your configuration.
+
 
 ## Testing on AWS
 
@@ -96,7 +99,7 @@ ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/mapnik-on-lambda:version1
 
 ### Creating lambda function
 
-Next we need to create a lambda function that uses a VPC config that gives access to your database.
+Next we are ready to create a lambda function that references the image URI. Since we are pulling data from RDS the lambda function will need to declare a VPC config that gives access to your database.
 
 To do this you will need to know the VPC subnet and security group details as well as the role the lambda will run under.
 
